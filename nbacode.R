@@ -20,6 +20,12 @@ nba$PaceRank <- NA
 order.pace <- order(nba$Pace, nba$Team, decreasing = TRUE)
 nba$PaceRank[order.pace] <- 1:nrow(nba)
 
+homeScore <- function(hometeam, awayteam)
+  return((nba$PPG[nba$Team == hometeam] + nba$OPPG[nba$Team == awayteam]) / 2) + 1
+
+awayScore <- function(hometeam, awayteam)
+  return((nba$PPG[nba$Team == awayteam] + nba$OPPG[nba$Team == hometeam]) / 2) - 1
+
 game <- function(hometeam, awayteam) {
   homeScore <- ((nba$PPG[nba$Team == hometeam] + nba$OPPG[nba$Team == awayteam]) / 2) + 1
   awayScore <- ((nba$PPG[nba$Team == awayteam] + nba$OPPG[nba$Team == hometeam]) / 2) - 1
@@ -69,6 +75,41 @@ gameSummary("CHI", "ATL")
 gameSummary("PHO", "MEM")
 gameSummary("MIL", "NOP")
 gameSummary("GSW", "NYK")
+
+## Write Results to CSV
+
+  # Right now, manually creating csv - figure out how to scrape and auto create csv based on daily NBA schedule
+
+    # filename <- function(date) {
+    #   file <- cat("\'", "./games/", date, "/", date, ".csv", "\'", sep="")
+    #   file <- as.character(file)
+    #   return(file)
+    # }
+
+daily <- read.csv("./games/12112019/12112019.csv")
+
+
+for (i in 1:nrow(daily)) {
+  home <- as.character(daily[i, "Home"])
+  away <- as.character(daily[i, "Away"])
+  daily[i, "winner"] <- game(home,away)
+  daily[i, "spread"] <-
+    if (homeScore(home,away) > awayScore(home,away)) {
+      -(homeScore(home,away) - awayScore(home,away))
+    } else {
+      -(awayScore(home,away) - homeScore(home,away))
+    }
+    
+  daily[i, "homeScore"] <- homeScore(home,away)
+  daily[i, "awayScore"] <- awayScore(home,away)
+  daily[i, "totalScore"] <- daily[i, "homeScore"] + daily[i, "awayScore"]
+
+}    
+write.csv(daily, "./games/12112019/12112019.csv")  
+
+    
+
+
 
 ## Task - Betting Data
   ## Predict score and compare to actual lines from nbaBettingData.xlsx
